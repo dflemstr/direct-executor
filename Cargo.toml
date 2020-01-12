@@ -1,0 +1,16 @@
+[package]
+name = "direct-executor"
+description = "An executor that directly executes futures, suitable for embedded environments"
+documentation = "https://docs.rs/direct-executor"
+repository = "https://github.com/dflemstr/direct-executor"
+keywords = ["executor", "futures", "io", "async"]
+license = "MIT OR Apache-2.0"
+categories = ["asynchronous", "embedded", "no-std"]
+version = "0.1.0"
+authors = ["David Flemström <david.flemstrom@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pin-utils = "0.1.0-alpha.4"
