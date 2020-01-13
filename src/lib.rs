@@ -49,15 +49,16 @@ where
 /// A common pattern is to let `wait` simply be some delay function (like `sleep()`), or in certain
 /// environments (such as on embedded devices), it might make sense to call `wfi` to wait for
 /// peripheral interrupts, if you know that to be the source of future completion.
-pub fn run_with_wake<F>(future: F, mut wait: impl FnMut(), wake: impl Fn()) -> F::Output
+pub fn run_with_wake<F>(future: F, mut wait: impl FnMut(), wake: fn()) -> F::Output
 where
     F: future::Future,
 {
     pin_utils::pin_mut!(future);
-    let raw_waker: task::RawWaker = create_raw_waker(&wake);
-    let waker = unsafe { task::Waker::from_raw(raw_waker) };
 
+    let raw_waker = raw_waker(&wake);
+    let waker = unsafe { task::Waker::from_raw(raw_waker) };
     let mut context = task::Context::from_waker(&waker);
+
     loop {
         if let task::Poll::Ready(result) = future.as_mut().poll(&mut context) {
             return result;
@@ -66,23 +67,19 @@ where
     }
 }
 
-fn create_raw_waker<F>(wake: *const F) -> task::RawWaker
-where
-    F: Fn(),
-{
-    task::RawWaker::new(
-        wake as *const (),
-        &task::RawWakerVTable::new(
-            |wake_ptr| create_raw_waker(wake_ptr as *const F),
-            |wake_ptr| unsafe {
-                let wake = (wake_ptr as *const F).as_ref().unwrap();
-                wake();
-            },
-            |wake_ptr| unsafe {
-                let wake = (wake_ptr as *const F).as_ref().unwrap();
-                wake();
-            },
-            |_| {},
-        ),
-    )
+static VTABLE: task::RawWakerVTable = task::RawWakerVTable::new(clone, wake, wake, drop);
+
+fn raw_waker(wake_ptr: *const fn()) -> task::RawWaker {
+    task::RawWaker::new(wake_ptr as *const (), &VTABLE)
 }
+
+fn clone(wake_ptr: *const ()) -> task::RawWaker {
+    raw_waker(wake_ptr as *const fn())
+}
+
+fn wake(wake_ptr: *const ()) {
+    let wake = unsafe { (wake_ptr as *const fn()).as_ref() }.unwrap();
+    wake();
+}
+
+fn drop(_wake_ptr: *const ()) {}
