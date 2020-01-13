@@ -6,7 +6,7 @@ repository = "https://github.com/dflemstr/direct-executor"
 keywords = ["executor", "futures", "io", "async"]
 license = "MIT OR Apache-2.0"
 categories = ["asynchronous", "embedded", "no-std"]
-version = "0.3.0"
+version = "0.3.1-alpha.0"
 authors = ["David Flemström <david.flemstrom@gmail.com>"]
 edition = "2018"
 
